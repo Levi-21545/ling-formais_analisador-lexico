@@ -3,6 +3,8 @@
 
 	export let automaton: Automaton;
 
+	export let onAnalyze: (input: string) => void;
+
 	export let onUpdateState: (data: {
 		state: number | null;
 		lastFrom: number | null;
@@ -44,12 +46,24 @@
 			error,
 		});
 	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === " ") {
+			e.preventDefault();
+			if (input.trim() && onAnalyze) {
+				onAnalyze(input.trim());
+				input = "";
+				currentState = automaton.start;
+			}
+		}
+	}
 </script>
 
 <div style="display:flex;flex-direction:column;gap:4px;">
 	<input
 		bind:value={input}
 		on:input={handleInput}
+		on:keydown={handleKeydown}
 		placeholder="Digite uma palavra e pressione espaço"
 		style="padding:6px 8px;border:1px solid #ccc;border-radius:6px;"
 	/>

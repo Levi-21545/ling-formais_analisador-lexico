@@ -1,7 +1,7 @@
 <script lang="ts">
   import TokenManager from "./lib/TokenManager.svelte";
   import LexicalAnalyzer from "./lib/LexicalAnalyzer.svelte";
-  import { buildAutomaton } from "./lib/automaton";
+  import { buildAutomaton, processString } from "./lib/automaton";
   import type { Automaton } from "./lib/automaton";
 
   let automaton: Automaton | null = null;
@@ -47,6 +47,16 @@
       errorFlag,
     });
   }
+
+  function handleAnalyze(input: string) {
+    if (!automaton) return;
+    const result = processString(automaton, input);
+
+    currentState = automaton.start;
+    currentFrom = null;
+    currentSymbol = null;
+    errorFlag = false;
+  }
 </script>
 
 <main style="max-width:900px;margin:28px auto;padding:0 12px;">
@@ -61,7 +71,11 @@
   {#if automaton}
     {#key tokenKey}
       <section style="display:grid;grid-template-columns: 1fr; gap:12px;">
-        <LexicalAnalyzer {automaton} onUpdateState={handleUpdateState} />
+        <LexicalAnalyzer
+          {automaton}
+          onUpdateState={handleUpdateState}
+          onAnalyze={handleAnalyze}
+        />
       </section>
     {/key}
   {:else}

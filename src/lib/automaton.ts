@@ -19,3 +19,21 @@ export function buildAutomaton(token: string): Automaton {
 
 	return { start: 0, finals: [token.length], transitions };
 }
+
+// Processa uma string de entrada através do AFD
+export function processString(automaton: Automaton, input: string) {
+	let current = automaton.start;
+
+	for (const char of input) {
+		const next = automaton.transitions[current]?.[char];
+
+		if (next === undefined) {
+			return { accepted: false, current };
+		}
+		current = next;
+	}
+
+	console.log(automaton)
+
+	return { accepted: automaton.finals.includes(current), current };
+}
