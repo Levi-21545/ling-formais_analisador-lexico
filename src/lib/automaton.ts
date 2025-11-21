@@ -1,39 +1,68 @@
 export interface Automaton {
 	start: number;
-	finals: number[];
+	finals: Record<number, string>;
 	transitions: Record<number, Record<string, number>>;
 }
 
-// Gera um AFD simples para reconhecer o token literal, ex: "casa"
-export function buildAutomaton(token: string): Automaton {
+// Gera um AFD unificado para reconhecer múltiplos tokens
+export function buildAutomaton(tokens: string[]): Automaton {
 	const transitions: Record<number, Record<string, number>> = {};
+	const finals: Record<number, string> = {};
 
-	for (let i = 0; i <= token.length; i++) {
-		transitions[i] = {};
-	}
-	for (let i = 0; i < token.length; i++) {
-		transitions[i][token[i]] = i + 1;
-	}
+	const startState = 0;
+	let nextState = 1;
 
-	console.log("Automaton transitions:", transitions);
+	transitions[startState] = {};
 
-	return { start: 0, finals: [token.length], transitions };
+	// Para cada token, constrói o caminho no autômato
+	tokens.forEach(token => {
+		let currentState = startState;
+
+		for (let i = 0; i < token.length; i++) {
+			const char = token[i];
+			const nextStateKey = transitions[currentState]?.[char];
+
+			if (nextStateKey === undefined) {
+				// Cria novo estado
+				transitions[currentState][char] = nextState;
+				currentState = nextState;
+				transitions[currentState] = {};
+				nextState++;
+			} else {
+				// Reutiliza estado existente
+				currentState = nextStateKey;
+			}
+
+			// Marca como estado final no último caractere
+			if (i === token.length - 1) {
+				finals[currentState] = token;
+			}
+		}
+	});
+
+	return { start: startState, finals, transitions };
 }
 
-// Processa uma string de entrada através do AFD
+// Processa a string de entrada e retorna se foi aceita, o estado final e o token correspondente (se aceito)
 export function processString(automaton: Automaton, input: string) {
 	let current = automaton.start;
+	let accepted = false;
+	let matchedToken = "";
 
 	for (const char of input) {
 		const next = automaton.transitions[current]?.[char];
 
 		if (next === undefined) {
-			return { accepted: false, current };
+			return { accepted: false, current, matchedToken: "" };
 		}
 		current = next;
 	}
 
-	console.log(automaton)
+	// Verifica se chegou em um estado final
+	if (automaton.finals[current] !== undefined) {
+		accepted = true;
+		matchedToken = automaton.finals[current];
+	}
 
-	return { accepted: automaton.finals.includes(current), current };
+	return { accepted, current, matchedToken };
 }

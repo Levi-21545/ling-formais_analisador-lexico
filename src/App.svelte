@@ -1,26 +1,29 @@
 <script lang="ts">
   import TokenManager from "./lib/TokenManager.svelte";
   import LexicalAnalyzer from "./lib/LexicalAnalyzer.svelte";
+  import StateTable from "./lib/StateTable.svelte";
+  import History from "./lib/History.svelte";
   import { buildAutomaton, processString } from "./lib/automaton";
   import type { Automaton } from "./lib/automaton";
-    import StateTable from "./lib/StateTable.svelte";
 
   let automaton: Automaton | null = null;
-  let token = "";
-  let tokenKey = 0;
+  let tokens: string[] = [];
+  let history: { token: string; accepted: boolean; matchedToken?: string }[] =
+    [];
 
   let currentState: number | null = null;
   let currentFrom: number | null = null;
   let currentSymbol: string | null = null;
   let errorFlag = false;
 
-  function handleSetToken(newToken: string) {
-    token = newToken;
-    console.log("Token definido:", token);
+  let tokenKey = 0;
 
-    automaton = buildAutomaton(token);
+  function handleSetToken(newTokens: string[]) {
+    tokens = newTokens;
+    automaton = buildAutomaton(newTokens);
+    history = [];
 
-    currentState = automaton.start;
+    currentState = 0;
     currentFrom = null;
     currentSymbol = null;
     errorFlag = false;
@@ -34,24 +37,25 @@
     lastSymbol: string | null;
     error: boolean;
   }) {
-    console.log("Recebendo atualização de estado:", data);
-
     currentState = data.state;
     currentFrom = data.lastFrom;
     currentSymbol = data.lastSymbol;
     errorFlag = data.error;
-
-    console.log("Estado atualizado:", {
-      currentState,
-      currentFrom,
-      currentSymbol,
-      errorFlag,
-    });
   }
 
   function handleAnalyze(input: string) {
     if (!automaton) return;
+
     const result = processString(automaton, input);
+
+    history = [
+      {
+        token: input,
+        accepted: result.accepted,
+        matchedToken: result.matchedToken,
+      },
+      ...history,
+    ];
 
     currentState = automaton.start;
     currentFrom = null;
@@ -62,7 +66,7 @@
 
 <main style="max-width:900px;margin:28px auto;padding:0 12px;">
   <h1 style="font-size:1.4rem;margin-bottom:12px;">
-    Analisador Léxico — AFD (token único)
+    Analisador Léxico — AFD (múltiplos tokens)
   </h1>
 
   <section style="margin-bottom:14px;">
@@ -84,10 +88,12 @@
           lastSymbol={currentSymbol}
           error={errorFlag}
         />
-        <history {history} />      
+        <History {history} />
       </section>
     {/key}
   {:else}
-    <div style="color:#6b7280;">Crie um token para começar (ex: "casa").</div>
+    <div style="color:#6b7280;">
+      Adicione tokens para começar (ex: "casa", "carro").
+    </div>
   {/if}
 </main>

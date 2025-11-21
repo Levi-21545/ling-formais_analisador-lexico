@@ -3,8 +3,6 @@
 
 	export let automaton: Automaton;
 
-	export let onAnalyze: (input: string) => void;
-
 	export let onUpdateState: (data: {
 		state: number | null;
 		lastFrom: number | null;
@@ -12,12 +10,16 @@
 		error: boolean;
 	}) => void;
 
+	export let onAnalyze: (input: string) => void;
+
 	let input = "";
-	let currentState = automaton.start;
+	let currentState = automaton?.start ?? -1;
 	let error = false;
 
 	function handleInput(event: Event & { currentTarget: HTMLInputElement }) {
 		const value = event.currentTarget.value;
+
+		if (!automaton) return;
 
 		let state = automaton.start;
 		let lastFrom: number | null = null;
@@ -28,8 +30,8 @@
 			lastFrom = state;
 			lastSymbol = ch;
 
-			const next = automaton.transitions[state]?.[ch] ?? null;
-			if (next === null) {
+			const next = automaton.transitions[state]?.[ch];
+			if (next === undefined) {
 				hasError = true;
 				break;
 			}
@@ -53,7 +55,15 @@
 			if (input.trim() && onAnalyze) {
 				onAnalyze(input.trim());
 				input = "";
-				currentState = automaton.start;
+				currentState = automaton?.start ?? -1;
+				error = false;
+
+				onUpdateState({
+					state: currentState,
+					lastFrom: null,
+					lastSymbol: null,
+					error: false,
+				});
 			}
 		}
 	}
@@ -67,4 +77,7 @@
 		placeholder="Digite uma palavra e pressione espaço"
 		style="padding:6px 8px;border:1px solid #ccc;border-radius:6px;"
 	/>
+	<span style="font-size:0.9rem;color:{error ? '#dc2626' : '#2563eb'};">
+		Estado atual: q{currentState}{error ? " — erro" : ""}
+	</span>
 </div>
