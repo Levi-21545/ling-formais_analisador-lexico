@@ -3,6 +3,7 @@
   import LexicalAnalyzer from "./lib/LexicalAnalyzer.svelte";
   import { buildAutomaton, processString } from "./lib/automaton";
   import type { Automaton } from "./lib/automaton";
+    import StateTable from "./lib/StateTable.svelte";
 
   let automaton: Automaton | null = null;
   let token = "";
@@ -76,6 +77,14 @@
           onUpdateState={handleUpdateState}
           onAnalyze={handleAnalyze}
         />
+        <StateTable
+          {automaton}
+          {currentState}
+          lastFrom={currentFrom}
+          lastSymbol={currentSymbol}
+          error={errorFlag}
+        />
+        <history {history} />      
       </section>
     {/key}
   {:else}
